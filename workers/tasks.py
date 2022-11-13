@@ -3,7 +3,7 @@ from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
 
-celery = Celery('tasks_queue', broker='RabbitMQ')
+celery = Celery('tasks_queue', broker='amqp://guest:guest@localhost:5672//')
 
 @celery.task(name='script_one')
 def script_one(args):

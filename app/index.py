@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-simple_app = Celery('workers', broker='RabbitMQ')
+simple_app = Celery('workers', broker='amqp://guest:guest@localhost:5672//')
 simple_app.conf.timezone = 'Asia/Kolkata'
 simple_app.conf.beat_schedule = {
     'run_script_every_second': {
@@ -18,7 +18,7 @@ def run_script():
     content = request.json
     additional_args = content["args"]
     script_id = content["script_id"]
-    task = simple_app.send_task(f'tasks_queue.script_{script_id}', kwargs={'args': additional_args})
+    task = simple_app.send_task(f'tasks_queue.{script_id}', kwargs={'args': additional_args})
     # set script status to 'RUNNING' in firestore for this user
     app.logger.info(f'Script with script id: {script_id} & task id: {task.id} STARTED.')
     return jsonify({"task_id": task.id}), 202
@@ -35,6 +35,7 @@ def stop_script():
 @app.route('/get_status/<task_id>', methods=['GET'])
 def get_status(task_id):
     status = simple_app.AsyncResult(task_id, app=simple_app)
+    print('status: ', status)
     return status
 
 if  __name__ == '__main__':
